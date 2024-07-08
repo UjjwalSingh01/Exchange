@@ -19,10 +19,8 @@ model User {
   lastname    String?
   email       String    @unique
   password    String
-  phone       String?
 
-  account        Account[]
-  transactions   Transaction[]
+  account     Account[]
 }
 
 
@@ -39,9 +37,10 @@ model Account {
 
 model Transaction {
   id          String      @id @default(uuid())
-  user        User        @relation( fields: [userId], references: [id])
-  userId      String
-  to          String
+  from_id     String
+  from_name   String
+  to_id       String
+  to_name     String
   amount      Int
   date        String
 }

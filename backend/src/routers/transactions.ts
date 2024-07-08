@@ -46,13 +46,10 @@ transactionRouter.use("/decode/*", async (c, next) => {
 })
 
 
-type userDetail = {
-    id: string,
-    email: string,
-    firstname: string,
-    lastname: string,
-    password: string,
-    phone: number
+type TransactionDetails = {
+    name: string, 
+    date: string,
+    amount: number
 }
 
 transactionRouter.get('/decode/getDetails', async(c) => {
@@ -66,7 +63,7 @@ transactionRouter.get('/decode/getDetails', async(c) => {
 
     try {
         
-        const result = await prisma.user.findUnique({
+        const result = await prisma.user.findFirst({
             where: {
                 id: userId
             }
@@ -81,40 +78,54 @@ transactionRouter.get('/decode/getDetails', async(c) => {
 
         // 10 transactions
         const transaction = await prisma.transaction.findMany({
+            take: 10,
             where: {
-                userId: userId
+                OR : [
+                    {
+                        from_id: userId
+                    } , {
+                        to_id: userId
+                    }
+                ]
             }
         })
 
         
         // everything except pass
         if(result != null){
-            const user = result.map((detail: userDetail) => {
-                return {
-                    firstname: detail.firstname,
-                    lastname: detail.lastname,
-                    email: detail.email
+            const tx: TransactionDetails[] = transaction.map((transactions) => {
+                if(transactions.from_id === userId) {
+                    return ({
+                        name: transactions.to_name,
+                        date: transactions.date,
+                        amount: -transactions.amount
+                    })
+                } else {
+                    return ({
+                        name: transactions.from_name,
+                        date: transactions.date,
+                        amount: transactions.amount
+                    })
                 }
             })
 
             return c.json({
-                user: user,
+                user: result.firstname,
                 account: account,
-                transaction: transaction
+                transaction: tx
             })
         }
-
-        
-        
     
     } catch(error) {
-
+        console.error("Server-Side Error in Getting Deatils: ", error);
     }
 })
 
 
 type transferDetails = {
-    to: string,
+    to_id: string,
+    to_name: string,
+    from_name: string,
     amount: number
 }  
 
@@ -173,29 +184,32 @@ transactionRouter.post('decode/transfer', async(c) => {
             }
           },
           where: {
-            id: detail.to,
+            userId: detail.to_id,
           },
         })
 
         const date: string = generateDate();
     
-        const senderTx = await prisma.transaction.create({
+        const Tx = await prisma.transaction.create({
             data: {
-                userId: userId,
-                to: detail.to,
-                amount: -detail.amount,
-                date: date
-            }
-        })
-
-        const recipientTx = await prisma.transaction.create({
-            data:{
-                userId: detail.to,
-                to: userId,
+                from_id: userId,
+                from_name: detail.from_name,
+                to_id: detail.to_id,
+                to_name: detail.to_name,
                 amount: detail.amount,
                 date: date
             }
         })
+
+        // const recipientTx = await prisma.transaction.create({
+        //     data:{
+        //         userId: detail.to_id,
+        //         to: userId,
+        //         to_name: detail.from_name,
+        //         amount: detail.amount,
+        //         date: date
+        //     }
+        // })
     })
 })
 
