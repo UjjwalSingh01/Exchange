@@ -30,7 +30,6 @@ function generateDate(){
 
 transactionRouter.use("/decode/*", async (c, next) => {
     const token = c.req.header("authorization") || "";
-    // console.log("middle ware called");
   
     try {
         const user: any = await verify(token, c.env.JWT_SECRET)
@@ -58,11 +57,10 @@ transactionRouter.get('/decode/getDetails', async(c) => {
         datasourceUrl: c.env.DATABASE_URL
     }).$extends(withAccelerate())
 
-    // call middleware userId
     const userId: string = c.get('userId')
 
     try {
-        
+        // firstname
         const result = await prisma.user.findFirst({
             where: {
                 id: userId
@@ -76,7 +74,7 @@ transactionRouter.get('/decode/getDetails', async(c) => {
             }
         })
 
-        // 10 transactions
+        // 10 transactions ... from/to name .. date .. amount
         const transaction = await prisma.transaction.findMany({
             take: 10,
             where: {
@@ -153,7 +151,7 @@ transactionRouter.post('decode/transfer', async(c) => {
             })
         }
 
-        if (fromId.balance < detail.amount) {
+        if (fromId.balance < detail.amount || detail.amount < 0) {
             c.status(401);
             return c.json({
                 message: "Insufficient Balance"

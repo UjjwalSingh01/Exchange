@@ -4,9 +4,18 @@ import axios from 'axios'
 import AmountCard from '../component/AmountCard';
 import { useNavigate } from 'react-router-dom';
 
+interface toDetails {
+  to_fname: string,
+  to_lname: string, 
+  to_id: string,
+  from_name: string
+}
+
 export default function Transfer() {
 
   const [users, setUsers] = useState([]);
+  const [filter, setFilter] = useState("")
+  const [balance, setBalance] = useState(0);
 
   const navigate = useNavigate()
 
@@ -15,11 +24,12 @@ export default function Transfer() {
 
         try {
 
-            const response = await axios.get('http://localhost:8787/api/v1/user/users', {
+            const response = await axios.get(`http://localhost:8787/api/v1/user/users/?filter=${filter}`, {
                 headers: { "Authorization": localStorage.getItem("token") }
             });
 
             setUsers(response.data.message)
+            setBalance(response.data.balance)
             
           } catch (error) {
             console.error("Error in Fetching Users: ", error);
@@ -27,7 +37,7 @@ export default function Transfer() {
     };
 
     fetchUsers();
-  }, []); 
+  }, [filter]); 
 
 
   return (
@@ -35,7 +45,7 @@ export default function Transfer() {
         <Header firstname='hoho'/>
         <div className="p-5">
             {/* <h1 className="text-2xl"><b>Your Balance: ₹{balance=='' ? '...loading' : balance.toFixed(3)}</b></h1> */}
-            <AmountCard heading='Balance' amount={account.balance}/>
+            <AmountCard heading='Balance' amount={balance}/>
         </div>
         <div>
             <h1 className="text-xl px-5"><b>Users</b></h1>
@@ -53,11 +63,7 @@ export default function Transfer() {
                 <label className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
                 <input 
                   onChange = {async (e)=>{
-                    const value = e.target.value;
-
-                    const response = await axios.get(`http://localhost:8787/api/v1/user/?filter=${value}`)
-                    setUsers(response.data.message)
-
+                    setFilter(e.target.value)
                   }}
                   type="search" className="block ps-10 w-full text-lg text-gray-900 border border-gray-300 rounded-2xl bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search" required />
               </div>
@@ -66,14 +72,17 @@ export default function Transfer() {
           </div>  
         </div>
         <div className='flex items-center flex-col'>
-            {users.map((usr)=>{
+            {users.map((usr: toDetails)=>{
                 // if(usr.username!=localStorage.getItem('username')){
                 return (
                   <div className='flex mx-20 border-2 m-3 justify-between w-3/4 border-black'>
-                    <div>{usr.firstname + " " + usr.lastname}</div>
+                    <div>{usr.to_fname + " " + usr.to_lname}</div>
                     <div><button className="border-2 px-1 py-0.5 bg-black text-white rounded-md" onClick={()=>{
-                        localStorage.setItem("to",usr.id);
-                        navigate('/Payments');
+
+                        const user = JSON.stringify(usr)
+
+                        localStorage.setItem("to" , user);
+                        navigate('/sendMoney');
                     }}>Send Money</button></div>
                   </div>
                 )

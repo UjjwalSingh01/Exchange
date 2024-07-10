@@ -4,19 +4,35 @@ import AmountCard from '../component/AmountCard'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom';
 
+interface Account {
+  balance: number,
+  credit: number,
+  debit: number
+}
+
+interface TransactionDetails {
+  name: string,
+  date: string,
+  amount: number
+}
+
 export function Dashboard() {
 
   const [user, setUser] = useState("");
-  const [transaction, setTransaction] = useState([{
+  const [transaction, setTransaction] = useState<TransactionDetails[]>([{
     name: "Ujjwal",
     date: "7/7/24",
     amount: 100
   } , {
     name: "Ujjwal",
     date: "7/7/24",
-    amount: 100
+    amount: -100
   }]);
-  const [account, setAccount] = useState([])
+  const [account, setAccount] = useState<Account>({
+    balance: 0,
+    credit: 0,
+    debit: 0
+  });
   
   const navigate = useNavigate()
  
@@ -43,7 +59,7 @@ export function Dashboard() {
  
   return (
     <>
-        <Header firstname={user.firstname}/>
+        <Header firstname={user}/>
         <div className='grid grid-cols-2 items-center gap-10 m-10'>
             <AmountCard heading='Balance' amount={account.balance}/>
             
@@ -68,24 +84,24 @@ export function Dashboard() {
                 <label className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
                 <input type="search" className="block ps-10 w-full text-lg text-gray-900 border border-gray-300 rounded-2xl bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search" required />
               </div>
-              <button type="submit" className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-2xl text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Search</button>
+              <button type="submit" className="text-white mb-4 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-2xl text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Search</button>
             
           </div>  
         </div>
         <div className='flex items-center flex-col'>
-          {transaction.map((tx, index) => {
+          {transaction.map((tx) => {
             return (
               <>
-                <div className='flex mx-20 border-2 m-3 justify-between w-3/4 border-black'>
-                  <div className='flex bg-emerald-300'>
-                    <p className='text-xl py-1'>
+                <div className='flex mx-20 m-3 justify-between w-1/2 bg-slate-200 rounded-2xl'>
+                  <div className='flex m-1 ml-10 gap-10 justify-center'>
+                    <p className='text-xl py-1 px-2'>
                       {tx.name}
                     </p>
-                    <p className='text-sm'>
-                      {tx.date}
-                    </p>
                   </div>
-                  <p className='text-xl bg-red-500'>
+                  <p className='self-center text-sm px-2'>
+                      {tx.date}
+                  </p>
+                  <p className='self-center text-xl m-1 mr-20 px-2 py-1'>
                     {tx.amount}
                   </p>
                 </div>

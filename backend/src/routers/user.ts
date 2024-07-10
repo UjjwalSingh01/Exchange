@@ -194,35 +194,62 @@ userRouter.post('/updateCred' ,  async(c) => {
 
 
 
-userRouter.get('/users' , async(c) => {
+userRouter.get('/decode/users' , async(c) => {
 
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL
     }).$extends(withAccelerate())
 
-    const user: string = await c.req.json()
+    const userId = c.get('userId')
+    const to: string = c.req.query('filter') || ""
 
     try {
 
-        const response = await prisma.user.findMany({
-            take: 10,
+        const user = await prisma.user.findFirst({
             where: {
-              firstname: {
-                contains: user,
-              },
-            },
+                id: userId
+            }
         })
 
-        return c.json({
-            message: response.map(users => ({
-                email: users.email,
-                firstname: users.firstname,
-                lastname: users.lastname,
-                id: users.id
-            }))
+        const balance: any = await prisma.account.findFirst({
+            where: {
+                userId: userId
+            }
         })
+
+        if(user === null){
+            c.status(401)
+            return c.json({
+                message: "User Does not Exist"
+            })
+        }
+        else {
+            const response = await prisma.user.findMany({
+                take: 10,
+                where: {
+                  firstname: {
+                    contains: to,
+                  },
+                },
+            })
+    
+            
+            const message = response.map(users => {
+                return ({
+                    to_fname: users.firstname,
+                    to_lname: users.lastname,
+                    to_id: users.id,
+                    from_name: user.firstname
+                })
+            })
+    
+            return c.json({
+                message: message,
+                balance: balance.balance
+            })
+        }
 
     } catch(error) {
-
+        console.error('Server-Side Error in Fetcing Users: ', error);
     }
 })
