@@ -16,6 +16,7 @@ export default function Transfer() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("")
   const [balance, setBalance] = useState(0);
+  const [user, setUser] = useState("")
 
   const navigate = useNavigate()
 
@@ -24,12 +25,14 @@ export default function Transfer() {
 
         try {
 
-            const response = await axios.get(`http://localhost:8787/api/v1/user/users/?filter=${filter}`, {
-                headers: { "Authorization": localStorage.getItem("token") }
-            });
+            const response = await axios.get('http://localhost:8787/api/v1/user/decode/users', {
+                params : { filter: filter } ,
+                headers: { "Authorization": localStorage.getItem('token') } 
+              });
 
             setUsers(response.data.message)
             setBalance(response.data.balance)
+            setUser(response.data.user)
             
           } catch (error) {
             console.error("Error in Fetching Users: ", error);
@@ -42,7 +45,7 @@ export default function Transfer() {
 
   return (
     <>
-        <Header firstname='hoho'/>
+        <Header firstname={user}/>
         <div className="p-5">
             {/* <h1 className="text-2xl"><b>Your Balance: ₹{balance=='' ? '...loading' : balance.toFixed(3)}</b></h1> */}
             <AmountCard heading='Balance' amount={balance}/>
@@ -52,7 +55,7 @@ export default function Transfer() {
         </div>
         
         <div className='flex justify-center'>
-          <div className='flex justify-between w-10/12 gap-4'>
+          <div className='flex justify-between w-10/12 gap-4 mb-4'>
             
               {/* <div className='bg-red-300'>
                   <svg className="w-4 h-4 justify-center text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
@@ -75,13 +78,18 @@ export default function Transfer() {
             {users.map((usr: toDetails)=>{
                 // if(usr.username!=localStorage.getItem('username')){
                 return (
-                  <div className='flex mx-20 border-2 m-3 justify-between w-3/4 border-black'>
-                    <div>{usr.to_fname + " " + usr.to_lname}</div>
-                    <div><button className="border-2 px-1 py-0.5 bg-black text-white rounded-md" onClick={()=>{
+                  <div className='flex mx-20 border-2 m-3 justify-between w-3/4 bg-slate-200 rounded-xl'>
+                    <div className='flex m-1 ml-10 gap-10 justify-center'>
+                    <p className='text-xl py-1 px-2'>
+                      {usr.to_fname + " " + usr.to_lname}
+                    </p>
+                  </div>
+                    <div className='self-center mr-6'>
+                      <button className="border-2 justify-center px-3 py-1 bg-black text-white rounded-md" onClick={()=>{
 
-                        const user = JSON.stringify(usr)
+                        const to = JSON.stringify(usr)
 
-                        localStorage.setItem("to" , user);
+                        localStorage.setItem("to" , to);
                         navigate('/sendMoney');
                     }}>Send Money</button></div>
                   </div>

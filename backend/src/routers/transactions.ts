@@ -127,88 +127,105 @@ type transferDetails = {
     amount: number
 }  
 
-transactionRouter.post('decode/transfer', async(c) => {
+transactionRouter.post('/decode/transfer', async(c) => {
 
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL
     }).$extends(withAccelerate())
 
-    const detail: transferDetails = await c.req.json()
+    try {
+        const detail: transferDetails = await c.req.json()
+        console.log(detail)
 
-    const response = prisma.$transaction(async (tx) => {
+        const response = await prisma.$transaction(async (tx) => {
 
-        const userId: string = c.get('userId')
+            const userId: string = c.get('userId')
 
-        const fromId = await prisma.account.findFirst({
-            where: {
-                userId: userId
-            }
-        })
-
-        if(fromId === null){
-            return c.json({
-                message: "User Does not Exist"
+            const fromId = await tx.account.findFirst({
+                where: {
+                    userId: userId
+                }
             })
-        }
 
-        if (fromId.balance < detail.amount || detail.amount < 0) {
-            c.status(401);
-            return c.json({
-                message: "Insufficient Balance"
-            })
-        }
-
-        const sender = await tx.account.update({
-          data: {
-            balance: {
-              decrement: detail.amount,
-            }, 
-            tt_debit: {
-              increment: detail.amount
+            if(fromId === null){
+                
+                return c.json({
+                    message: "User Does not Exist"
+                })
             }
-          },
-          where: {
-            id: fromId.id,
-          },
-        })
+
+            if (fromId.balance < detail.amount || detail.amount < 0) {
+                c.status(401);
+                return c.json({
+                    message: "Insufficient Balance"
+                })
+            }
+
+            const sender = await tx.account.update({
+                data: {
+                    balance: {
+                        decrement: detail.amount,
+                    }, 
+                    tt_debit: {
+                        increment: detail.amount
+                    }
+                },
+                where: {
+                    id: fromId.id,
+                },
+            })
+            
+            const recipient = await tx.account.update({
+                data: {
+                    balance: {
+                        increment: detail.amount,
+                    },
+                    tt_credit: {
+                        increment: detail.amount
+                    }
+                },
+                where: {
+                    userId: detail.to_id,
+                },
+            })
+
+            const date: string = generateDate();
         
-        const recipient = await tx.account.update({
-          data: {
-            balance: {
-              increment: detail.amount,
-            },
-            tt_credit: {
-              increment: detail.amount
-            }
-          },
-          where: {
-            userId: detail.to_id,
-          },
+            const Tx = await prisma.transaction.create({
+                data: {
+                    from_id: userId,
+                    from_name: detail.from_name,
+                    to_id: detail.to_id,
+                    to_name: detail.to_name,
+                    amount: detail.amount,
+                    date: date
+                }
+            })
+
+            // const recipientTx = await prisma.transaction.create({
+            //     data:{
+            //         userId: detail.to_id,
+            //         to: userId,
+            //         to_name: detail.from_name,
+            //         amount: detail.amount,
+            //         date: date
+            //     }
+            // })
+
+            return c.json({
+                message: Tx
+            });
         })
 
-        const date: string = generateDate();
+        return c.json({
+            message: response
+        })
+
+    } catch (error){
+        console.error("Server-Side Error In Transfer: ", error)
+    }
+
     
-        const Tx = await prisma.transaction.create({
-            data: {
-                from_id: userId,
-                from_name: detail.from_name,
-                to_id: detail.to_id,
-                to_name: detail.to_name,
-                amount: detail.amount,
-                date: date
-            }
-        })
-
-        // const recipientTx = await prisma.transaction.create({
-        //     data:{
-        //         userId: detail.to_id,
-        //         to: userId,
-        //         to_name: detail.from_name,
-        //         amount: detail.amount,
-        //         date: date
-        //     }
-        // })
-    })
 })
 
 

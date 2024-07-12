@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 interface toDetails {
     to_id: string,
-    to_name: string,
+    to_fname: string,
+    to_lname: string,
     from_name: string
 }
 
@@ -21,12 +22,14 @@ export function SendMoney(){
 
             const data: any = localStorage.getItem('to')
             const to: toDetails = JSON.parse(data);
+
+            console.log(to)
             
-            axios.post('http://localhost:8787/api/v1/transaction/decode/transfer', 
+            const response = axios.post('http://localhost:8787/api/v1/transaction/decode/transfer', 
                 {
                     amount: amount,
                     to_id: to.to_id,
-                    to_name: to.to_name,
+                    to_name: to.to_fname,
                     from_name: to.from_name
                 } , {
                     headers: { "Authorization": localStorage.getItem('token') }
@@ -35,7 +38,9 @@ export function SendMoney(){
 
             localStorage.removeItem("to");
 
-            navigate('/transfer')
+            setTimeout(() => {
+                navigate('/transfer');
+            }, 2000); // 1000 milliseconds = 1 second
 
         } catch (error) {
             console.error("Error in Sending Money: ", error)

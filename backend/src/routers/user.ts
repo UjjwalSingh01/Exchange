@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs';
 import zod from 'zod'
 import { decode, sign, verify } from 'hono/jwt'
 import { PrismaClient } from '@prisma/client/edge'
@@ -92,7 +92,8 @@ userRouter.post('/register', async (c) => {
 
         c.status(200);
         return c.json({
-            message: token
+            token: token,
+            user: user
         })
 
     } catch (error) {
@@ -113,10 +114,11 @@ userRouter.get('/login', async (c) => {
         datasourceUrl: c.env.DATABASE_URL
     }).$extends(withAccelerate())
 
-    const detail: Record<string,string> = await c.req.header();
+    const detail: Record<string,string> = c.req.query();
     const zodResult = emailSchema.safeParse(detail.email)
 
     if(!zodResult.success){
+        c.status(401)
         return c.json({
             message: zodResult
         })
@@ -132,6 +134,7 @@ userRouter.get('/login', async (c) => {
         })
 
         if(response === null){
+            c.status(401)
             return c.json({
                 message: "User Does not Exist"
             })
@@ -139,6 +142,7 @@ userRouter.get('/login', async (c) => {
 
         const isMatch = await bcrypt.compare(detail.password, response.password)
         if(!isMatch){
+            c.status(401)
             return c.json({
                 message: "Invalid Credentials"
             })
@@ -147,7 +151,7 @@ userRouter.get('/login', async (c) => {
         const token = await sign({ id: response.id }, c.env.JWT_SECRET);
 
         return c.json({
-            message: token
+            message: token,
         })
 
     } catch (error) {
@@ -245,7 +249,8 @@ userRouter.get('/decode/users' , async(c) => {
     
             return c.json({
                 message: message,
-                balance: balance.balance
+                balance: balance.balance,
+                user: user.firstname
             })
         }
 

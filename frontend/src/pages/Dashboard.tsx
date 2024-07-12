@@ -6,8 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 interface Account {
   balance: number,
-  credit: number,
-  debit: number
+  tt_credit: number,
+  tt_debit: number
 }
 
 interface TransactionDetails {
@@ -19,19 +19,13 @@ interface TransactionDetails {
 export function Dashboard() {
 
   const [user, setUser] = useState("");
-  const [transaction, setTransaction] = useState<TransactionDetails[]>([{
-    name: "Ujjwal",
-    date: "7/7/24",
-    amount: 100
-  } , {
-    name: "Ujjwal",
-    date: "7/7/24",
-    amount: -100
-  }]);
+
+  const [transaction, setTransaction] = useState<TransactionDetails[]>([]);
+
   const [account, setAccount] = useState<Account>({
     balance: 0,
-    credit: 0,
-    debit: 0
+    tt_credit: 0,
+    tt_debit: 0
   });
   
   const navigate = useNavigate()
@@ -47,6 +41,10 @@ export function Dashboard() {
           setTransaction(response.data.transaction); 
           setUser(response.data.user);
           setAccount(response.data.account);
+
+          // console.log(response.data.account)
+          // console.log(response.data.transaction); 
+          // console.log(response.data.user);
           
         } catch (error) {
           console.error("Error in Fetching Details: ", error);
@@ -54,7 +52,7 @@ export function Dashboard() {
       };
   
       fetchDetails();
-  })
+  }, [])
 
  
   return (
@@ -69,8 +67,8 @@ export function Dashboard() {
               </div>
             </div>
 
-            <AmountCard heading='Total Credit' amount={account.credit}/>
-            <AmountCard heading='Total Debit' amount={account.debit}/>
+            <AmountCard heading='Total Credit' amount={account.tt_credit}/>
+            <AmountCard heading='Total Debit' amount={account.tt_debit}/>
         </div>
         <div className='flex justify-center'>
           <div className='flex justify-between w-10/12 gap-4'>

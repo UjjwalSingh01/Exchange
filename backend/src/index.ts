@@ -4,7 +4,7 @@ import {decode,sign,verify} from 'hono/jwt'
 import { userRouter } from './routers/user';
 import { transactionRouter } from './routers/transactions';
 import { PrismaClient } from '@prisma/client/edge'
-const prisma = new PrismaClient()
+import { withAccelerate } from '@prisma/extension-accelerate'
 
 const app = new Hono()
 
